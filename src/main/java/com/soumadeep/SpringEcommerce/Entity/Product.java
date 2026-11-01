@@ -1,18 +1,19 @@
 package com.soumadeep.SpringEcommerce.Entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.DynamicUpdate;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
+@DynamicUpdate
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class Product {
 
     @Id
@@ -31,9 +32,6 @@ public class Product {
     private String imageName;
     private String imageType;
     @Lob
+    @JsonIgnore
     private byte[] imageData;
-
-    public Product(int id) {
-        this.id=id;
-    }
 }

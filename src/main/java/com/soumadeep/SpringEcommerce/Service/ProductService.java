@@ -2,14 +2,17 @@ package com.soumadeep.SpringEcommerce.Service;
 
 import com.soumadeep.SpringEcommerce.Entity.Product;
 import com.soumadeep.SpringEcommerce.Repo.ProductRepo;
+import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.filter.Filter;
+import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.ai.vectorstore.pgvector.PgVectorStore;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.List;
@@ -17,24 +20,22 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class ProductService {
 
-    @Autowired
-    private ProductRepo productRepo;
-
-    @Autowired
-    private ChatClient chatClient;
-    @Autowired
-    private PgVectorStore vectorStore;
-    @Autowired
-    private AIImageGenService aiImageGenService;
+    private final ProductRepo productRepo;
+    private final ChatClient chatClient;
+    private final PgVectorStore vectorStore;
+    private final AIImageGenService aiImageGenService;
 
     public List<Product> getAllProducts() {
         return productRepo.findAll();
     }
 
     public Product getProductById(int id) {
-        return productRepo.findById(id).orElse(new Product(-1));
+        return productRepo.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Product not found with id: " + id));
     }
 
     public Product addProduct(Product product, MultipartFile image) throws IOException {
@@ -67,26 +68,31 @@ public class ProductService {
         Document document=new Document(
                 UUID.randomUUID().toString(),
                 content,
-                Map.of("productId",String.valueOf(saveProduct.getId())));
+                Map.of("type", "PRODUCT", "productId", saveProduct.getId()));
 
         vectorStore.add(List.of(document));
 
         return saveProduct;
     }
 
-    public Product updateProduct(Product product, MultipartFile image) throws IOException {
-        if(image != null && !image.isEmpty()){
+    public Product updateProduct(int id, Product product, MultipartFile image) throws IOException {
+        Product existing = getProductById(id);   // 404 if missing
+
+        if (image != null && !image.isEmpty()) {
             product.setImageName(image.getOriginalFilename());
             product.setImageType(image.getContentType());
             product.setImageData(image.getBytes());
+        } else {
+            product.setImageName(existing.getImageName());
+            product.setImageType(existing.getImageType());
+            product.setImageData(existing.getImageData());
         }
         Product saveProduct=productRepo.save(product);
 
-        Filter.Expression filter=new Filter.Expression(
-                Filter.ExpressionType.EQ,
-                new Filter.Key("productId"),
-                new Filter.Value(String.valueOf(saveProduct.getId()))
-        );
+        Filter.Expression filter = new FilterExpressionBuilder()
+                .eq("productId", saveProduct.getId())
+                .build();
+
         vectorStore.delete(filter);
 
         String content=String.format("""
@@ -112,7 +118,7 @@ public class ProductService {
         Document document=new Document(
                 UUID.randomUUID().toString(),
                 content,
-                Map.of("productId",String.valueOf(saveProduct.getId())));
+                Map.of("type", "PRODUCT", "productId", saveProduct.getId()));
 
         vectorStore.add(List.of(document));
 
@@ -120,7 +126,14 @@ public class ProductService {
     }
 
     public void deleteProduct(int id) {
+        getProductById(id);
         productRepo.deleteById(id);
+
+        Filter.Expression filter = new FilterExpressionBuilder()
+                .eq("productId", id)
+                .build();
+
+        vectorStore.delete(filter);
     }
 
     @Transactional(readOnly = true)
@@ -172,9 +185,8 @@ public class ProductService {
                  - Follow the typical visual style of top e-commerce websites like Amazon, Flipkart, or Shopify.
                  - Make the product appear life-like and professionally photographed in a studio setup.
                  - The final image should look immediately ready for use on an e-commerce website without further editing.
-                """,name,category,description);
+                """,category,name,description);
 
-        byte[] aiImage=aiImageGenService.generateImage(prompt);
-        return  aiImage;
+        return  aiImageGenService.generateImage(prompt);
     }
 }

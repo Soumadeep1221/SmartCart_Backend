@@ -8,5 +8,4 @@ public record OrderResponse(String orderId,
                             String email,
                             String status,
                             LocalDate orderDate,
-                            List<OrderItemResponse> items)
-{}
+                            List<OrderItemResponse> items) {}

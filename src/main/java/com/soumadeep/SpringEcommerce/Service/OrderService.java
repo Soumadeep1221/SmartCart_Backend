@@ -9,10 +9,11 @@ import com.soumadeep.SpringEcommerce.Entity.OrderItem;
 import com.soumadeep.SpringEcommerce.Entity.Product;
 import com.soumadeep.SpringEcommerce.Repo.OrderRepo;
 import com.soumadeep.SpringEcommerce.Repo.ProductRepo;
+import lombok.RequiredArgsConstructor;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.filter.Filter;
+import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.ai.vectorstore.pgvector.PgVectorStore;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,22 +27,21 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class OrderService {
 
-    @Autowired
-    private ProductRepo productRepo;
-    @Autowired
-    private OrderRepo orderRepo;
-    @Autowired
-    private PgVectorStore vectorStore;
+    private final ProductRepo productRepo;
+    private final OrderRepo orderRepo;
+    private final PgVectorStore vectorStore;
 
-    public OrderResponse placeOrder(OrderRequest orderRequest) {
+    @Transactional
+    public OrderResponse placeOrder(OrderRequest orderRequest, String email) {
 
         Order order=new Order();
         String orderId="ORD"+ UUID.randomUUID().toString().substring(0,8).toUpperCase();
         order.setOrderId(orderId);
         order.setCustomerName(orderRequest.customerName());
-        order.setEmail(orderRequest.email());
+        order.setEmail(email);
         order.setStatus("PLACED");
         order.setOrderDate(LocalDate.now());
 
@@ -65,11 +65,10 @@ public class OrderService {
             product.setStockQuantity(product.getStockQuantity() - itemReq.quantity());
             productRepo.save(product);
 
-            Filter.Expression filter=new Filter.Expression(
-                    Filter.ExpressionType.EQ,
-                    new Filter.Key("productId"),
-                    new Filter.Value(String.valueOf(product.getId()))
-            );
+            Filter.Expression filter = new FilterExpressionBuilder()
+                    .eq("productId", product.getId())
+                    .build();
+
             vectorStore.delete(filter);
 
             String updatedContent=String.format("""
@@ -95,7 +94,7 @@ public class OrderService {
             Document updatedDoc=new Document(
                     UUID.randomUUID().toString(),
                     updatedContent,
-                    Map.of("productId",String.valueOf(product.getId())));
+                    Map.of("type", "PRODUCT", "productId", product.getId()));
 
             vectorStore.add(List.of(updatedDoc));
 
@@ -130,7 +129,9 @@ public class OrderService {
         Document document=new Document(
                 UUID.randomUUID().toString(),
                 content.toString(),
-                Map.of("orderId",String.valueOf(saveOrder.getId())));
+                Map.of("type", "ORDER",
+                        "orderId", String.valueOf(saveOrder.getId()),
+                        "ownerEmail", email));
 
         vectorStore.add(List.of(document));
 

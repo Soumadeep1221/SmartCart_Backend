@@ -1,80 +1,114 @@
 package com.soumadeep.SpringEcommerce.Service;
 
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.advisor.MessageChatMemoryAdvisor;
-import org.springframework.ai.chat.memory.ChatMemory;
-import org.springframework.ai.chat.memory.MessageWindowChatMemory;
 import org.springframework.ai.chat.prompt.PromptTemplate;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.filter.Filter;
+import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.ai.vectorstore.pgvector.PgVectorStore;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
-import java.nio.file.Files;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Service
+@RequiredArgsConstructor
+@Slf4j
 public class ChatBotService {
 
-    @Autowired
-    private ResourceLoader loader;
-    @Autowired
-    private PgVectorStore vectorStore;
-    @Autowired
-    final private ChatClient chatClient;
+    private static final String USER_RULE =
+            """
+                    This user is a customer. The context contains only this customer's own orders.
+                    If they ask about another person's orders, names, emails or any other customer's data,
+                    refuse and say you can only help with their own orders.
+            """;
 
-    ChatMemory chatMemory= MessageWindowChatMemory.builder().build();
+    private static final String ADMIN_RULE =
+            """
+                    This user is the store admin. You may share details of any order or product
+                    found in the context, including customer names and emails.
+            """;
 
-    private ChatBotService(ChatClient.Builder builder){
-        this.chatClient=builder.build();
-    }
+    private final ResourceLoader loader;
+    private final PgVectorStore vectorStore;
+    private final ChatClient chatClient;
 
-    public String getBotResponse(String message) {
+    public String getBotResponse(String message, String email, boolean admin) {
+
+        String promptStringTemplate;
+        try {
+            promptStringTemplate = loader
+                    .getResource("classpath:prompts/chatbot-rag-prompt.st")
+                    .getContentAsString(StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            log.error("Could not load chatbot prompt", e);
+            throw new ResponseStatusException(
+                    HttpStatus.INTERNAL_SERVER_ERROR, "Chatbot is not configured properly");
+        }
 
         try {
-            String promptStringTemplate= Files.readString(
-                    loader.getResource("classpath:prompts/chatbot-rag-prompt.st")
-                            .getFile()
-                            .toPath()
-            );
+            String context = fetchSemanticContext(message, email, admin);
 
-            String context=fetchSemanticContext(message);
+            Map<String, Object> variables = new HashMap<>();
+            variables.put("context", context);
+            variables.put("userQuery", message);
+            variables.put("userEmail", email);
+            variables.put("accessRule", admin ? ADMIN_RULE : USER_RULE);
 
-            Map<String, Object> variables=new HashMap<>();
-            variables.put("context",context);
-            variables.put("userQuery",message);
-
-            PromptTemplate promptTemplate= PromptTemplate.builder()
+            PromptTemplate promptTemplate = PromptTemplate.builder()
                     .template(promptStringTemplate)
                     .variables(variables)
                     .build();
 
-            return chatClient.prompt(promptTemplate.create()).call().content();
+            return chatClient
+                    .prompt(promptTemplate.create())
+                    .call()
+                    .content();
 
-        } catch (IOException e) {
-            return "Bot Failed "+e.getMessage();
+        } catch (Exception e) {
+            log.error("Chatbot failed", e);
+            throw new ResponseStatusException(
+                    HttpStatus.SERVICE_UNAVAILABLE, "Chatbot is unavailable right now. Please try again.");
         }
     }
 
-    private String fetchSemanticContext(String message) {
-        List<Document> documents=vectorStore.doSimilaritySearch(
-                SearchRequest.builder()
-                        .query(message)
-                        .topK(5)
-                        .similarityThreshold(0.7)
-                        .build()
-        );
+    private String fetchSemanticContext(String message, String email, boolean admin) {
+        FilterExpressionBuilder b = new FilterExpressionBuilder();
 
-        StringBuilder stringBuilder=new StringBuilder();
+        List<Document> products = search(message, b.eq("type", "PRODUCT").build(), 5, 0.4);
 
-        for(Document document:documents){
-            stringBuilder.append(document.getFormattedContent()).append("\n");
+        Filter.Expression orderFilter = admin ? b.eq("type", "ORDER").build()
+                : b.and(b.eq("type", "ORDER"), b.eq("ownerEmail", email)).build();
+
+        List<Document> orders = search(message, orderFilter, admin ? 5 : 3, 0.25);
+
+        StringBuilder sb = new StringBuilder("PRODUCTS:\n");
+        for (Document d : products) {
+            sb.append(d.getText()).append("\n");
         }
-        return stringBuilder.toString();
+        sb.append("\nORDERS:\n");
+        for (Document d : orders) {
+            sb.append(d.getText()).append("\n");
+        }
+        return sb.toString();
+    }
+
+    private List<Document> search(String query, Filter.Expression filter, int topK, double threshold) {
+        return vectorStore.doSimilaritySearch(
+                SearchRequest.builder()
+                        .query(query)
+                        .topK(topK)
+                        .similarityThreshold(threshold)
+                        .filterExpression(filter)
+                        .build());
     }
 }

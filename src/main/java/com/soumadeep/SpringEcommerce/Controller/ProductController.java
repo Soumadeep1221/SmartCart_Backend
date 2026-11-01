@@ -1,10 +1,14 @@
 package com.soumadeep.SpringEcommerce.Controller;
 
 import com.soumadeep.SpringEcommerce.Entity.Product;
+import com.soumadeep.SpringEcommerce.Enum.TokenAction;
 import com.soumadeep.SpringEcommerce.Service.ProductService;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.soumadeep.SpringEcommerce.Service.TokenService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -13,11 +17,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
-@CrossOrigin
+@RequiredArgsConstructor
 public class ProductController {
 
-    @Autowired
-    private ProductService productService;
+    private final ProductService productService;
+    private final TokenService tokenService;
 
     @GetMapping("/products")
     public ResponseEntity<List<Product>> getProducts()
@@ -28,44 +32,31 @@ public class ProductController {
     @GetMapping("/product/{id}")
     public ResponseEntity<Product> getProductById(@PathVariable int id)
     {
-        Product product=productService.getProductById(id);
-
-        if(product.getId()>0)
-            return new ResponseEntity<>(product,HttpStatus.OK);
-        else
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(productService.getProductById(id),HttpStatus.OK);
     }
 
     @GetMapping("product/{productId}/image")
     public ResponseEntity<byte[]> getImgByProductId(@PathVariable int productId)
     {
-        Product product=productService.getProductById(productId);
-        if(product.getId()>0)
-            return new ResponseEntity<>(product.getImageData(),HttpStatus.OK);
-        else
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(productService.getProductById(productId).getImageData(),HttpStatus.OK);
     }
 
     @PostMapping("/product/generate-description")
-    public ResponseEntity<String> generateDescription(@RequestParam String name,@RequestParam String category){
-        try {
-            String aiDesc=productService.generateDescription(name,category);
-            return new ResponseEntity<>(aiDesc,HttpStatus.OK);
-
-        } catch (Exception e) {
-            return new ResponseEntity<>(e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<String> generateDescription(@RequestParam String name, @RequestParam String category, Authentication authentication) {
+        String email = authentication.getName();
+        String aiDesc = tokenService.charge(email, TokenAction.DESCRIPTION, () -> productService.generateDescription(name, category));
+        return ResponseEntity.ok()
+                .header("X-Token-Balance", String.valueOf(tokenService.getBalance(email)))
+                .body(aiDesc);
     }
 
     @PostMapping("/product/generate-image")
-    public ResponseEntity<?> generateImage(@RequestParam String name,@RequestParam String category,@RequestParam String description){
-        try {
-            byte[] aiImage=productService.generateImage(name,category,description);
-            return new ResponseEntity<>(aiImage,HttpStatus.OK);
-
-        }catch (Exception e){
-            return new ResponseEntity<>(e.getMessage(),HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<byte[]> generateImage(@RequestParam String name, @RequestParam String category, @RequestParam String description, Authentication authentication) {
+        String email = authentication.getName();
+        byte[] aiImage = tokenService.charge(email, TokenAction.IMAGE, () -> productService.generateImage(name, category, description));
+        return ResponseEntity.ok()
+                .header("X-Token-Balance", String.valueOf(tokenService.getBalance(email)))
+                .body(aiImage);
     }
 
     @PostMapping("/product")
@@ -80,9 +71,9 @@ public class ProductController {
     }
 
     @PutMapping("/product/{id}")
-    public ResponseEntity<?> updateProduct(@RequestPart Product product, @RequestPart(required = false) MultipartFile imageFile){
+    public ResponseEntity<?> updateProduct(@PathVariable int id, @RequestPart Product product, @RequestPart(required = false) MultipartFile imageFile){
         try {
-            Product product1=productService.updateProduct(product,imageFile);
+            Product product1=productService.updateProduct(id,product,imageFile);
             return new ResponseEntity<>(product1,HttpStatus.OK);
         } catch (IOException e) {
             return new ResponseEntity<>(e.getMessage(),HttpStatus.BAD_REQUEST);
@@ -92,21 +83,18 @@ public class ProductController {
     @DeleteMapping("/product/{id}")
     public ResponseEntity<String> deleteProduct(@PathVariable int id)
     {
-        Product product=productService.getProductById(id);
-        if(product!=null)
-        {
+        try {
             productService.deleteProduct(id);
-            return new ResponseEntity<>("Deleted",HttpStatus.OK);
+            return new ResponseEntity<>("Deleted", HttpStatus.OK);
+        } catch (DataIntegrityViolationException e) {
+            return new ResponseEntity<>("This product cannot be deleted because it is part of existing orders.", HttpStatus.CONFLICT);
         }
-        else
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
     @GetMapping("/products/search")
     public ResponseEntity<List<Product>> searchProducts(@RequestParam String keyword)
     {
         List<Product> products=productService.searchProducts(keyword);
-        System.out.println("Searching with "+keyword);
         return new ResponseEntity<>(products,HttpStatus.OK);
     }
 }
