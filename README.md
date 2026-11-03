@@ -368,7 +368,7 @@ The image is deployed as a Docker web service on Render with all settings suppli
 
 ## 🔗 Related repositories
 
-- **Frontend:** [SpringEcommerce_Frontend](https://github.com/Soumadeep1221/SpringEcommerce_Frontend) (React, Vite, Bootstrap, deployed on Netlify)
+- **Frontend:** [SmartCart_Frontend](https://github.com/Soumadeep1221/SmartCart_Frontend) (React, Vite, Bootstrap, deployed on Netlify)
 - **Backend:** [SmartCart_Backend](https://github.com/Soumadeep1221/SmartCart_Backend) (this repository)
 
 ---
