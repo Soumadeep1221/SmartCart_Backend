@@ -6,6 +6,7 @@
 
 [![Live Demo](https://img.shields.io/badge/-Live_Demo-00C7B7?style=for-the-badge&logo=netlify&logoColor=white)](https://smartcart-soumadeep1221.netlify.app/)
 [![API](https://img.shields.io/badge/-Live_API-46E3B7?style=for-the-badge&logo=render&logoColor=black)](https://smartcart-1-1.onrender.com)
+[![Frontend Repo](https://img.shields.io/badge/-Frontend_Repository-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Soumadeep1221/SpringEcommerce_Frontend)
 
 ![Java](https://img.shields.io/badge/-Java_25-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/-Spring_Boot_4.0.2-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
@@ -365,15 +366,22 @@ The image is deployed as a Docker web service on Render with all settings suppli
 
 ---
 
+## 🔗 Related repositories
+
+- **Frontend:** [SpringEcommerce_Frontend](https://github.com/Soumadeep1221/SpringEcommerce_Frontend) (React, Vite, Bootstrap, deployed on Netlify)
+- **Backend:** [SmartCart_Backend](https://github.com/Soumadeep1221/SmartCart_Backend) (this repository)
+
+---
+
 <div align="center">
 
 ## 👨‍💻 Author
 
 **Soumadeep Dey** · Java Backend Developer
 
-[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-34d399?style=for-the-badge&logo=linkedin&logoColor=white&labelColor=0f172a)](https://www.linkedin.com/in/soumadeep-dey-)
-[![GitHub](https://img.shields.io/badge/GitHub-Soumadeep1221-34d399?style=for-the-badge&logo=github&logoColor=white&labelColor=0f172a)](https://github.com/Soumadeep1221)
-[![Portfolio](https://img.shields.io/badge/Portfolio-Visit-34d399?style=for-the-badge&logo=vercel&logoColor=white&labelColor=0f172a)](https://soumadeep-dey-portfolio.vercel.app/)
+[![LinkedIn](https://img.shields.io/badge/-LinkedIn-0A66C2?style=for-the-badge&logo=linkedin&logoColor=white)](https://www.linkedin.com/in/soumadeep-dey-)
+[![GitHub](https://img.shields.io/badge/-GitHub-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Soumadeep1221)
+[![Portfolio](https://img.shields.io/badge/-Portfolio-000000?style=for-the-badge&logo=vercel&logoColor=white)](https://soumadeep-dey-portfolio.vercel.app/)
 
 ⭐ If you like this project, consider giving the repository a star.
 
