@@ -4,18 +4,18 @@
 
 **An AI-powered e-commerce API with a privacy-safe RAG chatbot, Google sign-in and a token-metered AI layer.**
 
-[![Live Demo](https://img.shields.io/badge/Live_Demo-Open_the_store-34d399?style=for-the-badge&logo=netlify&logoColor=white&labelColor=0f172a)](https://smartcart-soumadeep1221.netlify.app/)
-[![API](https://img.shields.io/badge/API-smartcart--1--1.onrender.com-34d399?style=for-the-badge&logo=render&logoColor=white&labelColor=0f172a)](https://smartcart-1-1.onrender.com)
+[![Live Demo](https://img.shields.io/badge/-Live_Demo-00C7B7?style=for-the-badge&logo=netlify&logoColor=white)](https://smartcart-soumadeep1221.netlify.app/)
+[![API](https://img.shields.io/badge/-Live_API-46E3B7?style=for-the-badge&logo=render&logoColor=black)](https://smartcart-1-1.onrender.com)
 
-![Java](https://img.shields.io/badge/Java-25-34d399?style=for-the-badge&logo=openjdk&logoColor=white&labelColor=0f172a)
-![Spring Boot](https://img.shields.io/badge/Spring_Boot-4.0.2-34d399?style=for-the-badge&logo=springboot&logoColor=white&labelColor=0f172a)
-![Spring AI](https://img.shields.io/badge/Spring_AI-2.0.2-34d399?style=for-the-badge&logo=spring&logoColor=white&labelColor=0f172a)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-34d399?style=for-the-badge&logo=postgresql&logoColor=white&labelColor=0f172a)
+![Java](https://img.shields.io/badge/-Java_25-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/-Spring_Boot_4.0.2-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
+![Spring AI](https://img.shields.io/badge/-Spring_AI_2.0.2-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/-PostgreSQL_+_pgvector-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
 
-![OpenAI](https://img.shields.io/badge/OpenAI-Chat_Embeddings_Images-34d399?style=for-the-badge&logo=openai&logoColor=white&labelColor=0f172a)
-![JWT](https://img.shields.io/badge/Auth-Google_Sign--In_+_JWT-34d399?style=for-the-badge&logo=jsonwebtokens&logoColor=white&labelColor=0f172a)
-![Docker](https://img.shields.io/badge/Docker-Containerized-34d399?style=for-the-badge&logo=docker&logoColor=white&labelColor=0f172a)
-![Maven](https://img.shields.io/badge/Build-Maven-34d399?style=for-the-badge&logo=apachemaven&logoColor=white&labelColor=0f172a)
+![OpenAI](https://img.shields.io/badge/-OpenAI-412991?style=for-the-badge&logo=openai&logoColor=white)
+![JWT](https://img.shields.io/badge/-Google_Sign--In_+_JWT-000000?style=for-the-badge&logo=jsonwebtokens&logoColor=white)
+![Docker](https://img.shields.io/badge/-Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Maven](https://img.shields.io/badge/-Maven-C71A36?style=for-the-badge&logo=apachemaven&logoColor=white)
 
 </div>
 
@@ -374,8 +374,6 @@ The image is deployed as a Docker web service on Render with all settings suppli
 [![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-34d399?style=for-the-badge&logo=linkedin&logoColor=white&labelColor=0f172a)](https://www.linkedin.com/in/soumadeep-dey-)
 [![GitHub](https://img.shields.io/badge/GitHub-Soumadeep1221-34d399?style=for-the-badge&logo=github&logoColor=white&labelColor=0f172a)](https://github.com/Soumadeep1221)
 [![Portfolio](https://img.shields.io/badge/Portfolio-Visit-34d399?style=for-the-badge&logo=vercel&logoColor=white&labelColor=0f172a)](https://soumadeep-dey-portfolio.vercel.app/)
-
-dey180343@gmail.com
 
 ⭐ If you like this project, consider giving the repository a star.
 
